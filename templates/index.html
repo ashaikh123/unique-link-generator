@@ -109,7 +109,8 @@
         </div>
 
         <label for="idfile">Upload ID File (.txt or .xlsx):</label>
-        <input type="file" name="id_file" id="id_file" accept=".txt,.xlsx" onchange="autoFillCount()">
+        <input type="file" name="id_file" id="id_file" accept=".txt,.xlsx">
+
 
         <div class="actions">
             <button type="submit">Generate Links</button>
@@ -127,23 +128,31 @@
     document.querySelector('input[name="id_file"]').addEventListener('change', function () {
         const fileInput = this;
         const formData = new FormData();
-        formData.append('id_file', fileInput.files[0]);
+        if (fileInput.files.length === 0) return;
 
-        fetch('/count_ids', {
-            method: 'POST',
+        // ✅ Match the Flask route's expected key
+        formData.append("id_file", fileInput.files[0]);
+
+        fetch("/count_ids", {
+            method: "POST",
             body: formData
-        }).then(res => res.json())
-          .then(data => {
-              if (data.count) {
-                  document.querySelector('input[name="num_links"]').value = data.count;
-              } else if (data.error) {
-                  alert("Error: " + data.error);
-              }
-          }).catch(err => {
-              alert("Failed to count IDs.");
-          });
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.count && Number.isInteger(data.count)) {
+                document.querySelector('input[name="count"]').value = data.count;
+            } else {
+                alert("Failed to count IDs.");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error processing file.");
+        });
     });
 </script>
+
+
 
 </body>
 </html>

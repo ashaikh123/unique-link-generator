@@ -45,13 +45,16 @@
 <div class="container">
     <h2>✅ Files Generated Successfully!</h2>
 
-    <a href="{{ url_for('download', filename=id_file) }}">⬇ Download Unique ID file (.dat)</a>
-    <a href="{{ url_for('download', filename=xlsx_file) }}">⬇ Download Main Links (.xlsx)</a>
 
-    {% if test_file %}
-    <a href="{{ url_for('download', filename=test_file) }}">⬇ Download Test Links (.xlsx)</a>
-    {% endif %}
-
+    <h3>Download Files:</h3>
+    
+        <a href="{{ url_for('download', filename=id_file) }}">Download ID List (.dat)</a>
+        <a href="{{ url_for('download', filename=xlsx_file) }}">Download Unique Links (.xlsx)</a>
+        {% if test_file %}
+        <a href="{{ url_for('download', filename=test_file) }}">Download Test Links (.xlsx)</a>
+        {% endif %}
+        <strong><a href="{{ url_for('download', filename=zip_file) }}">⬇ Download All as ZIP</a></strong>
+    
     <a href="{{ url_for('index') }}" class="button">🔁 Generate More</a>
 </div>
 </body>

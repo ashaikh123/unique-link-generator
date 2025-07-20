@@ -6,7 +6,7 @@ import time
 from openpyxl import Workbook
 from werkzeug.utils import secure_filename
 from flask import jsonify
-import openpyxl
+
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -28,29 +28,52 @@ def help_page():
 @app.route('/count_ids', methods=['POST'])
 def count_ids():
     try:
-        file = request.files['id_file']
-        ids = []
-        if file and file.filename:
-            ext = os.path.splitext(file.filename)[1].lower()
-            if ext == '.txt':
-                ids = [line.strip() for line in file if line.strip()]
-            elif ext in ['.xlsx', '.xls']:
-                import openpyxl
-                wb = openpyxl.load_workbook(file, read_only=True)
-                sheet = wb.active
-                for row in sheet.iter_rows(min_row=1, max_col=1):
-                    val = row[0].value
-                    if val:
-                        ids.append(str(val).strip())
-        return jsonify({'count': len(ids)})
+        file = request.files.get('id_file')
+        if not file:
+            return jsonify({"error": "No file uploaded"}), 400
+
+        ext = os.path.splitext(file.filename)[1].lower()
+        count = 0
+
+        if ext == '.txt':
+            for i, line in enumerate(file.stream):
+                if i > 10000:  # Limit to 10k lines
+                    break
+                if line.strip():
+                    count += 1
+
+        elif ext in ['.xlsx', '.xls']:
+            import openpyxl
+            from io import BytesIO
+            wb = openpyxl.load_workbook(filename=BytesIO(file.read()), read_only=True)
+            sheet = wb.active
+            for i, row in enumerate(sheet.iter_rows(min_row=1, max_col=1), 1):
+                if i > 10000:
+                    break
+                val = row[0].value
+                if val:
+                    count += 1
+        else:
+            return jsonify({"error": "Unsupported file format"}), 400
+
+        return jsonify({"count": count})
+
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({"error": str(e)}), 500
+
+
 
 @app.route('/generate', methods=['POST'])
 def generate():
     try:
         length = request.form.get('length')
-        count = int(request.form.get('count'))
+        count_raw = request.form.get('count')
+        print(count_raw)
+        if not count_raw or not count_raw.isdigit():
+            flash("Please enter a valid number of links.")
+            return redirect(url_for('index'))
+        count = int(count_raw)
+
         base_url = request.form.get('base_url').strip()
         prefix = request.form.get('prefix', '')
         include_ptest = request.form.get('ptest') == 'on'
@@ -61,7 +84,7 @@ def generate():
         id_length = int(length) if not use_uuid else 0
 
         ids = []
-        file = request.files.get('idfile')
+        file = request.files.get('id_file')
         if file and file.filename:
             filename = secure_filename(file.filename)
             filepath = os.path.join(UPLOAD_FOLDER, filename)
@@ -126,12 +149,26 @@ def generate():
                     test_url += "&ptest=0"
                 test_ws.append([test_id, test_url])
             test_wb.save(test_file_path)
+        
+        import zipfile
+
+        # --- Zip all files
+        zip_filename = f"{filename_prefix}_all_files.zip"
+        zip_path = os.path.join(OUTPUT_FOLDER, zip_filename)
+
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            zipf.write(id_file_path, arcname=os.path.basename(id_file_path))
+            zipf.write(xlsx_file_path, arcname=os.path.basename(xlsx_file_path))
+            if test_file_path:
+                zipf.write(test_file_path, arcname=os.path.basename(test_file_path))
+
+
 
         return render_template('result.html',
                                id_file=os.path.basename(id_file_path),
                                xlsx_file=os.path.basename(xlsx_file_path),
-                               test_file=os.path.basename(test_file_path) if test_file_path else None)
-
+                               test_file=os.path.basename(test_file_path) if test_file_path else None,
+                               zip_file=os.path.basename(zip_path))
     except Exception as e:
         flash(f"Error: {str(e)}")
         return redirect(url_for('index'))
