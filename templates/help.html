@@ -1,0 +1,52 @@
+<!-- templates/help.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Help - Unique Link Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #40E0D0;
+            padding: 30px;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+        }
+        h2 {
+            text-align: center;
+        }
+        p {
+            margin-bottom: 12px;
+        }
+        a {
+            color: #0073e6;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📘 Unique Link Generator - Help</h2>
+        <p><strong>Length of ID:</strong> Number of characters for each unique ID (e.g. 8). Leave blank to use full UUID.</p>
+        <p><strong>Number of Links:</strong> Total links/IDs to generate. This will auto-fill when an ID file is uploaded.</p>
+        <p><strong>Survey Link:</strong> The base URL for appending unique IDs. (e.g., https://survey.com/?id=)</p>
+        <p><strong>Prefix:</strong> Optional prefix added to each ID. Useful for wave or batch tagging.</p>
+        <p><strong>Include &ptest=0:</strong> Appends &ptest=0 to all links if checked.</p>
+        <p><strong>Upload ID File:</strong> Accepts `.txt` or `.xlsx` files with one ID per row. Overrides auto-generated IDs.</p>
+        <p><strong>Generate Test Links:</strong> If checked, generates test links (TEST_1, TEST_2, ...) in a separate file.</p>
+        <p><strong>Outputs:</strong></p>
+        <ul>
+            <li><code>.dat</code> file with the list of IDs</li>
+            <li><code>.xlsx</code> file with the links</li>
+            <li><code>TestLinks</code> file (if test link generation is enabled)</li>
+        </ul>
+        <p>Made by: <a href="https://www.linkedin.com/in/abdullah-shaikh-26215a82/" target="_blank">Abdullah Shaikh</a> | Pureprofile</p>
+        <p><a href="/">← Back to Generator</a></p>
+    </div>
+</body>
+</html>
