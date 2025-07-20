@@ -5,6 +5,8 @@ import random
 import time
 from openpyxl import Workbook
 from werkzeug.utils import secure_filename
+from flask import jsonify
+import openpyxl
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -18,6 +20,33 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 @app.route('/', methods=['GET', 'POST'])
 def index():
     return render_template('index.html')
+
+@app.route('/help')
+def help_page():
+    return render_template('help.html')
+
+@app.route('/count_ids', methods=['POST'])
+def count_ids():
+    try:
+        file = request.files.get('file')
+        if not file:
+            return jsonify({'count': 0})
+
+        ext = os.path.splitext(file.filename)[1].lower()
+        count = 0
+
+        if ext == '.txt':
+            count = len([line for line in file.read().decode().splitlines() if line.strip()])
+        elif ext in ['.xlsx', '.xls']:
+            wb = openpyxl.load_workbook(file, read_only=True)
+            sheet = wb.active
+            for row in sheet.iter_rows(min_row=1, max_col=1):
+                if row[0].value:
+                    count += 1
+
+        return jsonify({'count': count})
+    except:
+        return jsonify({'count': 0})
 
 @app.route('/generate', methods=['POST'])
 def generate():

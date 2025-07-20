@@ -58,10 +58,39 @@
             margin-bottom: 10px;
         }
     </style>
+<script>
+    function toggleTestInput(checkbox) {
+        document.getElementById("test_links_input").style.display = checkbox.checked ? "block" : "none";
+    }
+    
+    function autoFillCount() {
+        const input = document.getElementById("id_file");
+        const file = input.files[0];
+        if (!file) return;
+    
+        const formData = new FormData();
+        formData.append("file", file);
+    
+        fetch("/count_ids", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.count) {
+                document.querySelector('[name="num_links"]').value = data.count;
+            }
+        });
+    }
+    </script>
+    
 </head>
 <body>
 <div class="container">
     <h2>Unique Link Generator - Web</h2>
+
+    <p style="text-align:center;"><a href="/help">🛈 About / Help</a></p>
+
 
     <!-- Display Flash Messages -->
     {% with messages = get_flashed_messages() %}
@@ -103,7 +132,7 @@
         </div>
 
         <label for="idfile">Upload ID File (.txt or .xlsx):</label>
-        <input type="file" name="idfile" accept=".txt,.xlsx">
+        <input type="file" name="id_file" id="id_file" accept=".txt,.xlsx" onchange="autoFillCount()">
 
         <div class="actions">
             <button type="submit">Generate Links</button>
