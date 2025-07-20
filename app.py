@@ -28,25 +28,23 @@ def help_page():
 @app.route('/count_ids', methods=['POST'])
 def count_ids():
     try:
-        file = request.files.get('file')
-        if not file:
-            return jsonify({'count': 0})
-
-        ext = os.path.splitext(file.filename)[1].lower()
-        count = 0
-
-        if ext == '.txt':
-            count = len([line for line in file.read().decode().splitlines() if line.strip()])
-        elif ext in ['.xlsx', '.xls']:
-            wb = openpyxl.load_workbook(file, read_only=True)
-            sheet = wb.active
-            for row in sheet.iter_rows(min_row=1, max_col=1):
-                if row[0].value:
-                    count += 1
-
-        return jsonify({'count': count})
-    except:
-        return jsonify({'count': 0})
+        file = request.files['id_file']
+        ids = []
+        if file and file.filename:
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext == '.txt':
+                ids = [line.strip() for line in file if line.strip()]
+            elif ext in ['.xlsx', '.xls']:
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True)
+                sheet = wb.active
+                for row in sheet.iter_rows(min_row=1, max_col=1):
+                    val = row[0].value
+                    if val:
+                        ids.append(str(val).strip())
+        return jsonify({'count': len(ids)})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/generate', methods=['POST'])
 def generate():

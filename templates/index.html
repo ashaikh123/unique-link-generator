@@ -58,33 +58,10 @@
             margin-bottom: 10px;
         }
     </style>
-<script>
-    function toggleTestInput(checkbox) {
-        document.getElementById("test_links_input").style.display = checkbox.checked ? "block" : "none";
-    }
-    
-    function autoFillCount() {
-        const input = document.getElementById("id_file");
-        const file = input.files[0];
-        if (!file) return;
-    
-        const formData = new FormData();
-        formData.append("file", file);
-    
-        fetch("/count_ids", {
-            method: "POST",
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.count) {
-                document.querySelector('[name="num_links"]').value = data.count;
-            }
-        });
-    }
-    </script>
+
     
 </head>
+
 <body>
 <div class="container">
     <h2>Unique Link Generator - Web</h2>
@@ -146,6 +123,27 @@
     function toggleTestInput(checkbox) {
         document.getElementById("test_links_input").style.display = checkbox.checked ? "block" : "none";
     }
+
+    document.querySelector('input[name="id_file"]').addEventListener('change', function () {
+        const fileInput = this;
+        const formData = new FormData();
+        formData.append('id_file', fileInput.files[0]);
+
+        fetch('/count_ids', {
+            method: 'POST',
+            body: formData
+        }).then(res => res.json())
+          .then(data => {
+              if (data.count) {
+                  document.querySelector('input[name="num_links"]').value = data.count;
+              } else if (data.error) {
+                  alert("Error: " + data.error);
+              }
+          }).catch(err => {
+              alert("Failed to count IDs.");
+          });
+    });
 </script>
+
 </body>
 </html>
