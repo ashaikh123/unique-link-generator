@@ -1,12 +1,11 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for, flash
+from flask import Flask, render_template, request, send_file, redirect, url_for, flash, jsonify
 import os
 import uuid
 import random
 import time
 from openpyxl import Workbook
 from werkzeug.utils import secure_filename
-from flask import jsonify
-
+import zipfile
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -37,7 +36,7 @@ def count_ids():
 
         if ext == '.txt':
             for i, line in enumerate(file.stream):
-                if i > 10000:  # Limit to 10k lines
+                if i > 10000:
                     break
                 if line.strip():
                     count += 1
@@ -61,14 +60,11 @@ def count_ids():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
 @app.route('/generate', methods=['POST'])
 def generate():
     try:
         length = request.form.get('length')
         count_raw = request.form.get('count')
-        print(count_raw)
         if not count_raw or not count_raw.isdigit():
             flash("Please enter a valid number of links.")
             return redirect(url_for('index'))
@@ -118,29 +114,28 @@ def generate():
         id_file_path = os.path.join(OUTPUT_FOLDER, f"{filename_prefix}.dat")
         xlsx_file_path = os.path.join(OUTPUT_FOLDER, f"{filename_prefix}.xlsx")
 
-        with open(id_file_path, 'w') as f:
-            f.write('\n'.join([prefix + i for i in ids]))
-
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Links"
+        # Efficient write for large volumes
+        from openpyxl import Workbook
+        wb = Workbook(write_only=True)
+        ws = wb.create_sheet(title="Links")
         ws.append(["ID", "Link"])
 
-        for i in ids:
-            full_id = prefix + i
-            url = f"{base_url}{full_id}"
-            if include_ptest:
-                url += "&ptest=0"
-            ws.append([full_id, url])
+        with open(id_file_path, 'w') as f1:
+            for uid in ids:
+                full_id = prefix + uid
+                url = f"{base_url}{full_id}"
+                if include_ptest:
+                    url += "&ptest=0"
+                f1.write(full_id + '\n')
+                ws.append([full_id, url])
 
         wb.save(xlsx_file_path)
 
         test_file_path = None
         if generate_test:
             test_file_path = os.path.join(OUTPUT_FOLDER, f"TestLinks_{timestamp}.xlsx")
-            test_wb = Workbook()
-            test_ws = test_wb.active
-            test_ws.title = "Test Links"
+            test_wb = Workbook(write_only=True)
+            test_ws = test_wb.create_sheet(title="Test Links")
             test_ws.append(["ID", "Link"])
             for i in range(1, test_count + 1):
                 test_id = f"TEST_{i}"
@@ -149,10 +144,8 @@ def generate():
                     test_url += "&ptest=0"
                 test_ws.append([test_id, test_url])
             test_wb.save(test_file_path)
-        
-        import zipfile
 
-        # --- Zip all files
+        # Zip outputs
         zip_filename = f"{filename_prefix}_all_files.zip"
         zip_path = os.path.join(OUTPUT_FOLDER, zip_filename)
 
@@ -162,13 +155,12 @@ def generate():
             if test_file_path:
                 zipf.write(test_file_path, arcname=os.path.basename(test_file_path))
 
-
-
         return render_template('result.html',
                                id_file=os.path.basename(id_file_path),
                                xlsx_file=os.path.basename(xlsx_file_path),
                                test_file=os.path.basename(test_file_path) if test_file_path else None,
                                zip_file=os.path.basename(zip_path))
+
     except Exception as e:
         flash(f"Error: {str(e)}")
         return redirect(url_for('index'))

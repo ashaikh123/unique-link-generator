@@ -116,10 +116,32 @@
             <button type="submit">Generate Links</button>
         </div>
     </form>
-
+<div id="progress-container" style="display:none; text-align: center; margin-top: 20px;">
+    <p>Generating links, please wait...</p>
+    <div style="background: #eee; border-radius: 10px; height: 20px; width: 100%;">
+        <div id="progress-bar" style="height: 100%; width: 0%; background: #0073e6; border-radius: 10px;"></div>
+    </div>
+</div>
     <p class="note">Created by Abdullah Shaikh | Pureprofile</p>
 </div>
+<script>
+    document.querySelector('form').addEventListener('submit', function () {
+        const progressContainer = document.getElementById("progress-container");
+        const progressBar = document.getElementById("progress-bar");
 
+        progressContainer.style.display = "block";
+
+        let progress = 0;
+        const interval = setInterval(() => {
+            if (progress >= 100) {
+                clearInterval(interval);
+            } else {
+                progress += 2; // Simulated speed
+                progressBar.style.width = progress + "%";
+            }
+        }, 100); // Adjust for speed
+    });
+</script>
 <script>
     function toggleTestInput(checkbox) {
         document.getElementById("test_links_input").style.display = checkbox.checked ? "block" : "none";
