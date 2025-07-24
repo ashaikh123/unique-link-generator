@@ -1,0 +1,9 @@
+# render.yaml
+services:
+  - type: web
+    name: unique-link-generator
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --timeout 300
+    plan: free
+    autoDeploy: true
